@@ -1,5 +1,8 @@
-import'package:flutter/material.dart';
-import 'package:futaride/bottom_nav_bar.dart'; // Adjust path
+import 'package:flutter/material.dart';
+import 'package:futaride/screens/login.dart';
+import 'package:futaride/screens/sign_up.dart';
+import 'package:futaride/screens/home_screen.dart';
+import 'package:futaride/screens/auth_screen.dart';
 
 void main() {
 
@@ -331,11 +334,9 @@ class _KekeAppState extends State<KekeApp> {
 
       debugShowCheckedModeBanner: false, // Remove debug banner
 
-      
+      // Set KekeContactsListScreen as the home page directly
 
-      // Set HomeScreenWithNavBar as the home page directly
-
-      home: const HomeScreenWithNavBar(),
+      home: const KekeContactsListScreen(),
 
     );
 
