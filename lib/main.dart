@@ -22,17 +22,22 @@ class MyApp extends StatelessWidget {
     // Define your app's custom light theme
     final lightTheme = ThemeData(
       brightness: Brightness.light,
-      primaryColor: Colors.yellow,
-      scaffoldBackgroundColor: Colors.white,
+      primaryColor: Colors.yellow, // This is the primary yellow for accents
+      scaffoldBackgroundColor: Colors.white, // Default background for scaffolds
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.yellow,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.white, // AppBar background is WHITE in light mode
+        foregroundColor: Colors.yellow, // Icons/text on AppBar are BLACK
+        elevation: 4, // Add a slight shadow
       ),
       colorScheme: const ColorScheme.light(
-        primary: Colors.yellow,
-        onPrimary: Colors.black,
-        surface: Colors.white,
-        onSurface: Colors.black,
+        primary: Colors.yellow, // Yellow for primary elements
+        onPrimary: Colors.black, // Text/icons on yellow elements
+        surface: Colors.white, // Card/surface background color
+        onSurface: Colors.black, // Text color on surfaces
+        background: Colors.black, // Main background color (like the top part of auth screens)
+        onBackground: Colors.white, // Text color on the background
+        error: Colors.red,
+        onError: Colors.white,
       ),
       textTheme: const TextTheme(
         headlineMedium: TextStyle(color: Colors.black),
@@ -52,17 +57,22 @@ class MyApp extends StatelessWidget {
     // Define your app's custom dark theme
     final darkTheme = ThemeData(
       brightness: Brightness.dark,
-      primaryColor: Colors.yellow,
-      scaffoldBackgroundColor: Colors.black,
+      primaryColor: Colors.yellow, // This is the primary yellow for accents
+      scaffoldBackgroundColor: Colors.black, // Default background for scaffolds
       appBarTheme: const AppBarTheme(
-        backgroundColor: Colors.yellow,
-        foregroundColor: Colors.black,
+        backgroundColor: Colors.black, // AppBar background is BLACK in dark mode
+        foregroundColor: Colors.yellow, // Icons/text on AppBar are WHITE
+        elevation: 4, // Add a slight shadow
       ),
       colorScheme: const ColorScheme.dark(
-        primary: Colors.yellow,
-        onPrimary: Colors.black,
-        surface: Colors.black,
-        onSurface: Colors.white,
+        primary: Colors.yellow, // Yellow for primary elements
+        onPrimary: Colors.black, // Text/icons on yellow elements
+        surface: Colors.black, // Card/surface background color
+        onSurface: Colors.white, // Text color on surfaces
+        background: Colors.black, // Main background color
+        onBackground: Colors.white, // Text color on the background
+        error: Colors.red,
+        onError: Colors.white,
       ),
       textTheme: const TextTheme(
         headlineMedium: TextStyle(color: Colors.white),

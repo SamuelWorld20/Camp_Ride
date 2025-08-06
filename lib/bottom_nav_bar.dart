@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:futaride/screens/home_screen.dart';
-import'package:futaride/screens/profile_screen.dart';
 // import 'package:your_app_name/school_map_screen.dart';
-import 'package:futaride/screens/notification_screen.dart'; // Import the notifications screen
+import 'package:futaride/screens/notification_screen.dart';
+import 'package:futaride/screens/profile_screen.dart'; // Ensure ProfileScreen is imported
 
 // Placeholder screens for other navigation bar items
+// Note: ProfileScreen and SettingsScreen are now proper widgets
+// that will inherit the Scaffold from HomeScreenWithNavBar.
+// Their internal Scaffold and AppBar should be removed if they had them,
+// similar to how KekeContactsListScreen was adjusted.
+// For this example, I'll make them return just a Center widget.
 
-class MapScreen extends StatelessWidget {
-  const MapScreen({super.key});
+class SchoolMapScreen extends StatelessWidget {
+  const SchoolMapScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return const Center(
         child: Text(
-          'Map Screen Content',
+          'School Map Screen Content',
           style: TextStyle(fontSize: 24),
         ),
       );
@@ -32,11 +37,10 @@ class _HomeScreenWithNavBarState extends State<HomeScreenWithNavBar> {
 
   // List of widgets (screens) to display in the body of the Scaffold
   final List<Widget> _pages = [
-    const KekeContactsListScreen(),
-    const MapScreen(),
-    const ProfileScreen(),          // Index 2: Placeholder for Profile
-            // Index 3: Placeholder for Settings
-  ];
+    const KekeContactsListScreen(), // Index 0: Keke contacts list
+    const SchoolMapScreen(),        // Index 1: The new map screen
+    const ProfileScreen(),          // Index 2: Profile Screen
+];
 
   // Function to handle tab selection
   void _onItemTapped(int index) {
@@ -59,8 +63,12 @@ class _HomeScreenWithNavBarState extends State<HomeScreenWithNavBar> {
       appBar: AppBar(
         title: Text(appBarTitle),
         centerTitle: true,
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.yellow,
+        // --- FIX START ---
+        // Use the AppBarTheme's background and foreground colors defined in main.dart
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        // --- FIX END ---
+        elevation: Theme.of(context).appBarTheme.elevation, // Ensure elevation is also inherited
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications),
@@ -91,11 +99,11 @@ class _HomeScreenWithNavBarState extends State<HomeScreenWithNavBar> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.yellow,
-        unselectedItemColor: Colors.grey,
+        selectedItemColor: Theme.of(context).primaryColor, // Yellow for selected icon/label
+        unselectedItemColor: Colors.grey, // Grey for unselected icon/label
         onTap: _onItemTapped,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        type: BottomNavigationBarType.fixed,
+        backgroundColor: Theme.of(context).colorScheme.surface, // White/Black background for the bar
+        type: BottomNavigationBarType.fixed, // Ensures labels are always visible
       ),
     );
   }

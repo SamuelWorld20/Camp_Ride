@@ -5,9 +5,19 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Determine if the current theme is dark mode
+    final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    // Define colors based on the current theme
+    final Color backgroundColor = Theme.of(context).colorScheme.surface; // White for light, Black for dark
+    final Color primaryIconColor = Theme.of(context).primaryColor; // Yellow for icon
+    final Color mainTextColor = Theme.of(context).colorScheme.onSurface; // Black for light, White for dark
+    final Color backButtonColor = Theme.of(context).colorScheme.onSurface; // Black for light, White for dark
+    final Color subtitleColor = Colors.grey[600]!; // Subtitle remains grey
+
     return Scaffold(
-      backgroundColor: Colors.black, // App's main background color
-      body: SafeArea( // Ensures content is not behind the status bar
+      backgroundColor: backgroundColor, // Dynamic background color
+      body: SafeArea(
         child: Stack(
           children: [
             // Main content
@@ -19,16 +29,16 @@ class NotificationsScreen extends StatelessWidget {
                   Icon(
                     Icons.mark_email_unread_outlined,
                     size: 100,
-                    color: Colors.yellow, // Using the yellow color
+                    color: primaryIconColor, // Yellow icon in both modes
                   ),
                   const SizedBox(height: 24),
                   // "No notifications yet" text
                   Text(
                     'No notifications yet',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white, // Using black text
-                    ),
+                          fontWeight: FontWeight.bold,
+                          color: mainTextColor, // Dynamic text color
+                        ),
                   ),
                   const SizedBox(height: 8),
                   // Subtitle text
@@ -36,8 +46,8 @@ class NotificationsScreen extends StatelessWidget {
                     'Your notification will appear here once you\'ve received them.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                          color: subtitleColor, // Grey subtitle in both modes
+                        ),
                   ),
                 ],
               ),
@@ -48,7 +58,7 @@ class NotificationsScreen extends StatelessWidget {
               left: 8,
               child: IconButton(
                 icon: const Icon(Icons.arrow_back),
-                color: Colors.yellow, // Back button color is black
+                color: backButtonColor, // Dynamic back button color
                 iconSize: 28,
                 onPressed: () {
                   Navigator.pop(context); // Navigate back to the home screen

@@ -16,8 +16,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   File? _image;
 
   // Hardcoded profile data since fields are not editable
-  final String _fullName = 'Ryan Reynolds';
-  final String _email = 'ryanraynold@example.com';
+  final String _fullName = 'John Doe';
+  final String _email = 'johndoe@gmail.com';
   final String _phoneNumber = '+234 82275836284';
 
   /// Handles image selection from the phone's gallery.
@@ -46,16 +46,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Align(
-                alignment: Alignment.topLeft,
-                child: IconButton(
-                  icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
-                  iconSize: 28,
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-              ),
               const SizedBox(height: 32),
               Stack(
                 children: [
