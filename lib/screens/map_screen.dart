@@ -91,7 +91,8 @@ class _MapScreenState extends State<MapScreen> {
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-                          child: const Text('Close'),
+                          child: const Text('Close',
+          style: TextStyle(color:Colors.red),                                 ),
                         ),
                       ),
                     ],
@@ -109,8 +110,6 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      appBar: AppBar(
-        title: Text('Keke Map', style: TextStyle(color: Theme.of(context).appBarTheme.foregroundColor)),
         backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 4,
       ),
@@ -133,13 +132,6 @@ class _MapScreenState extends State<MapScreen> {
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
-                ),
-              ),
-              trailing: Text(
-                place['price'],
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
               onTap: () => _showPlaceDetails(context, place),
