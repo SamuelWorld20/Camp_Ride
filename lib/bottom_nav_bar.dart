@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:futaride/screens/home_screen.dart';
 // import 'package:your_app_name/school_map_screen.dart';
 import 'package:futaride/screens/notification_screen.dart';
-import 'package:futaride/screens/profile_screen.dart'; // Ensure ProfileScreen is imported
+import 'package:futaride/screens/profile_screen.dart';
+import'package:futaride/screens/map_screen.dart';// Ensure ProfileScreen is imported
 
 // Placeholder screens for other navigation bar items
 // Note: ProfileScreen and SettingsScreen are now proper widgets
@@ -10,20 +11,6 @@ import 'package:futaride/screens/profile_screen.dart'; // Ensure ProfileScreen i
 // Their internal Scaffold and AppBar should be removed if they had them,
 // similar to how KekeContactsListScreen was adjusted.
 // For this example, I'll make them return just a Center widget.
-
-class SchoolMapScreen extends StatelessWidget {
-  const SchoolMapScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-        child: Text(
-          'School Map Screen Content',
-          style: TextStyle(fontSize: 24),
-        ),
-      );
-  }
-}
 
 class HomeScreenWithNavBar extends StatefulWidget {
   const HomeScreenWithNavBar({super.key});
@@ -38,7 +25,7 @@ class _HomeScreenWithNavBarState extends State<HomeScreenWithNavBar> {
   // List of widgets (screens) to display in the body of the Scaffold
   final List<Widget> _pages = [
     const KekeContactsListScreen(), // Index 0: Keke contacts list
-    const SchoolMapScreen(),        // Index 1: The new map screen
+    const MapScreen(),        // Index 1: The new map screen
     const ProfileScreen(),          // Index 2: Profile Screen
 ];
 
