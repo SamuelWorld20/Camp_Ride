@@ -91,8 +91,10 @@ class _MapScreenState extends State<MapScreen> {
                           onPressed: () {
                             Navigator.of(context).pop();
                           },
-                          child: const Text('Close',
-          style: TextStyle(color:Colors.red),                                 ),
+                          child: const Text(
+                            'Close',
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ),
                       ),
                     ],
@@ -110,9 +112,6 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 4,
-      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
         itemCount: places.length,
