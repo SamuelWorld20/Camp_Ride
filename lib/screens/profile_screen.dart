@@ -4,13 +4,15 @@ import 'package:provider/provider.dart';
 import 'package:futaride/theme_provider.dart';
 import 'dart:io';
 
-// Import the Supabase package
-import 'package:supabase_flutter/supabase_flutter.dart';
+// Import the Supabase package and hide the Provider class to avoid conflicts
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 
-// Initialize Supabase. You'll need to get these values from your Supabase project settings.
-// It's recommended to use environment variables for these in a real app.
+// Define your Supabase constants here for use in this file.
+// IMPORTANT: These are for reference only. Supabase is initialized in main.dart.
 const supabaseUrl = 'https://yhmprtprcjoeimpaieeq.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlobXBydHByY2pvZWltcGFpZWVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MDE1MDUsImV4cCI6MjA3MTI3NzUwNX0.vqlLE218TSLFKZVKkpKmyxt9Xc9ECJ06gGVzARM_2gE';
+
+// Get the already initialized Supabase client instance.
 final supabase = Supabase.instance.client;
 
 class ProfileScreen extends StatefulWidget {
@@ -31,29 +33,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize Supabase and then fetch the user profile.
-    _initializeAndFetchProfile();
-  }
-
-  /// Initializes Supabase and fetches user profile data.
-  Future<void> _initializeAndFetchProfile() async {
-    try {
-      // Ensure Supabase is initialized before any operations
-      await Supabase.initialize(
-        url: supabaseUrl,
-        anonKey: supabaseAnonKey,
-      );
-
-      _fetchUserProfile();
-    } catch (e) {
-      print('Error initializing Supabase: $e');
-      setState(() {
-        _isLoading = false;
-        _fullName = 'Initialization Error';
-        _email = 'Initialization Error';
-        _phoneNumber = 'Initialization Error';
-      });
-    }
+    // Directly fetch the user profile since Supabase is already initialized in main.dart
+    _fetchUserProfile();
   }
 
   /// Asynchronously fetches user profile data from Supabase.
@@ -72,8 +53,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _phoneNumber = user.phone ?? 'Not available';
 
         // Fetch the full name from the 'profiles' table
-        // This assumes you have a 'profiles' table with a 'full_name' column
-        // and a row for the current user.
         final response = await supabase
             .from('profiles')
             .select('full_name') // Select the full_name column

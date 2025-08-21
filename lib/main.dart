@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 import 'package:futaride/theme_provider.dart';
 import 'package:futaride/bottom_nav_bar.dart'; // Ensure this file exists
 import 'package:futaride/screens/auth_screen.dart'; // Ensure this file exists
+import'package:futaride/screens/splash_screen.dart';
 
 // Define your Supabase constants outside of the main function for clarity
 const supabaseUrl = 'https://yhmprtprcjoeimpaieeq.supabase.co';
@@ -113,8 +114,9 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.themeMode, // Controlled by the provider
       theme: lightTheme,
       darkTheme: darkTheme,
-      initialRoute: '/auth', // Use initialRoute for navigation
+      initialRoute: '/welcome', // Use initialRoute for navigation
       routes: {
+        '/welcome': (context) => const SplashScreen(),
         '/home': (context) => const HomeScreenWithNavBar(),
         '/auth': (context) => const AuthScreen(),
       },
