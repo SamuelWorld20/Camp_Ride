@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-
-// You might need to add these imports if you plan to use Firebase later
-// import 'package:firebase_auth/firebase_auth.dart';
-// import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Add this import for Supabase
 
 // Enum to manage the current form type (Login or Register)
 enum AuthFormType { login, register }
@@ -17,6 +14,7 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   // Default to Login form initially
   AuthFormType _formType = AuthFormType.login;
+  bool _isLoading = false;
 
   // Text editing controllers for input fields
   final TextEditingController _fullNameController = TextEditingController();
@@ -28,10 +26,27 @@ class _AuthScreenState extends State<AuthScreen> {
   bool _rememberMe = false;
   bool _obscurePassword = true;
 
+  @override
+  void initState() {
+    super.initState();
+    // Listen for authentication state changes and navigate accordingly
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      final AuthChangeEvent event = data.event;
+      if (event == AuthChangeEvent.signedIn) {
+        // If the user has signed in, navigate to the home screen.
+        // The pushReplacementNamed is used to prevent the user from going back to the login screen.
+        Navigator.of(context).pushReplacementNamed('/home');
+      }
+    });
+  }
+
   // Function to show a simple SnackBar message for user feedback
-  void _showSnackBar(String message) {
+  void _showSnackBar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Theme.of(context).colorScheme.primary,
+      ),
     );
   }
 
@@ -45,16 +60,72 @@ class _AuthScreenState extends State<AuthScreen> {
     super.dispose();
   }
 
+  // --- SUPABASE AUTHENTICATION FUNCTIONS ---
+
+  Future<void> _signUp() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      // Sign up the user with Supabase Auth
+      await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+      );
+      
+      _showSnackBar('Sign up successful! Please check your email to confirm your account.');
+
+    } on AuthException catch (e) {
+      // Handle specific Supabase authentication errors
+      _showSnackBar(e.message, isError: true);
+    } catch (e) {
+      // Handle other potential errors
+      _showSnackBar('An unexpected error occurred.', isError: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _signIn() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text.trim();
+
+      // Sign in the user with Supabase Auth
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      
+      // The auth state listener in initState will handle navigation.
+      
+    } on AuthException catch (e) {
+      // Handle specific Supabase authentication errors
+      _showSnackBar(e.message, isError: true);
+    } catch (e) {
+      // Handle other potential errors
+      _showSnackBar('An unexpected error occurred.', isError: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   // This method will be called when the main button (Login/Register) is pressed
   void _handleAuthAction() {
     if (_formType == AuthFormType.login) {
-      _showSnackBar('Login button pressed!');
-      // TODO: Implement Firebase login logic here
-      // Use _emailController.text and _passwordController.text
+      _signIn();
     } else {
-      _showSnackBar('Register button pressed!');
-      // TODO: Implement Firebase sign-up logic here
-      // Use _fullNameController.text, _phoneNumberController.text, _emailController.text, and _passwordController.text
+      _signUp();
     }
   }
 
@@ -278,8 +349,10 @@ class _AuthScreenState extends State<AuthScreen> {
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: _handleAuthAction, // Calls the unified handler
-                              child: Text(_formType == AuthFormType.login ? 'Login' : 'Register'),
+                              onPressed: _isLoading ? null : _handleAuthAction, // Disable button while loading
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : Text(_formType == AuthFormType.login ? 'Login' : 'Register'),
                             ),
                           ),
                           const SizedBox(height: 24.0),

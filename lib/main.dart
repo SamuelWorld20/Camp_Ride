@@ -2,8 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:futaride/bottom_nav_bar.dart';
 import 'package:futaride/theme_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() {
+    WidgetsFlutterBinding.ensureInitialized();
+ await Supabase.initialize(
+     url: 'https://yhmprtprcjoeimpaieeq.supabase.co';
+     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlobXBydHByY2pvZWltcGFpZWVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MDE1MDUsImV4cCI6MjA3MTI3NzUwNX0.vqlLE218TSLFKZVKkpKmyxt9Xc9ECJ06gGVzARM_2gE';
+ );
+    routes: {
+        '/home': (context) => const HomeScreenWithNavBar(),
+    },
+    
   runApp(
     ChangeNotifierProvider(
       create: (context) => ThemeProvider(),
@@ -95,7 +105,7 @@ class MyApp extends StatelessWidget {
       themeMode: themeProvider.themeMode, // Controlled by the provider
       theme: lightTheme,
       darkTheme: darkTheme,
-      home: const HomeScreenWithNavBar(),
+      home: const AuthScreen(),
     );
   }
 }

@@ -18,6 +18,8 @@ dev_dependencies:
   url_launcher: ^6.2.5
   image_picker: ^1.1.2
   provider: ^6.1.2
+  supabase_flutter: ^1.10.0
+  flutter_secure_storage: ^9.0.0
 
 flutter:
   uses-material-design: true
