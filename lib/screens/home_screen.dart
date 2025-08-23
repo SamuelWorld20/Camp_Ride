@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 import 'package:url_launcher/url_launcher.dart';
-import 'package:futaride/screens/notification_screen.dart'; // Import the new notifications screen
+import 'dart:async'; // Required for the Timer class
 
-// This screen now only contains the content for the Keke Rider Contacts list.
-// The Scaffold and AppBar are managed by the parent HomeScreenWithNavBar.
+const  supabaseUrl = 'https://yhmprtprcjoeimpaieeq.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlobXBydHByY2pvZWltcGFpZWVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MDE1MDUsImV4cCI6MjA3MTI3NzUwNX0.vqlLE218TSLFKZVKkpKmyxt9Xc9ECJ06gGVzARM_2gE';
+// Initialize Supabase client
+final supabase = Supabase.instance.client;
 
 class KekeContactsListScreen extends StatefulWidget {
   const KekeContactsListScreen({super.key});
@@ -13,13 +16,125 @@ class KekeContactsListScreen extends StatefulWidget {
 }
 
 class _KekeContactsListScreenState extends State<KekeContactsListScreen> {
-  final List<KekeRider> _riders = [
-    KekeRider(name: 'Emeka Eze', contact: '08033334444', review: 'Emeka is a very reliable driver, always punctual and friendly!', isBooked: false),
-    KekeRider(name: 'Aisha Bello', contact: '09022225555', review: 'Aisha is great! Her Keke is always clean and she knows the best routes to avoid traffic.', isBooked: false),
-    KekeRider(name: 'Femi Adebayo', contact: '07088881111', review: 'Femi is a calm and safe driver. A pleasure to ride with.', isBooked: false),
-    KekeRider(name: 'Ngozi Okoro', contact: '08144445555', review: 'Ngozi is booked often for a reason! She is the best and always has her cool in traffic.', isBooked: true),
-    KekeRider(name: 'Kingsley Uche', contact: '07066667777', review: 'Kingsley is new but very professional. Highly recommended!', isBooked: false),
+  // A static list of riders with their Supabase IDs.
+  // NOTE: You must replace these IDs with the actual IDs from your Supabase 'profiles' table.
+  List<KekeRider> _riders = [
+    KekeRider(id: '849c5798-04cc-4ee5-b184-e70e6e80e655', name: 'Emeka Eze', contact: '08033334444', review: 'Emeka is a very reliable driver, always punctual and friendly!', isBooked: false),
+    KekeRider(id: '339722de-e500-4250-beda-c395c90f1a77', name: 'Aisha Bello', contact: '09022225555', review: 'Aisha is great! Her Keke is always clean and she knows the best routes to avoid traffic.', isBooked: false),
+    KekeRider(id: '138626fd-ce44-4c2d-9a07-d53cb8982900', name: 'Femi Adebayo', contact: '07088881111', review: 'Femi is a calm and safe driver. A pleasure to ride with.', isBooked: false),
+    KekeRider(id: '648476d3-d136-4536-8f8f-46a58d7eae5e', name: 'Ngozi Okoro', contact: '08144445555', review: 'Ngozi is booked often for a reason! She is the best and always has her cool in traffic.', isBooked: false),
+    KekeRider(id: '63cab08f-5853-4871-a765-9fc35b08fd32', name: 'Kingsley Uche', contact: '07066667777', review: 'Kingsley is new but very professional. Highly recommended!', isBooked: false),
   ];
+  Timer? _statusCheckTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start a periodic timer to check for status updates and revert them if necessary.
+    _startStatusCheckTimer();
+  }
+
+  @override
+  void dispose() {
+    // Cancel the timer when the widget is disposed to prevent memory leaks
+    _statusCheckTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Starts a periodic timer to fetch and check rider statuses.
+  void _startStatusCheckTimer() {
+    // This timer will run every 30 seconds to refresh the local list with latest status from Supabase.
+    _statusCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _fetchRiderStatuses();
+    });
+    // Call it once immediately to load the initial data
+    _fetchRiderStatuses();
+  }
+
+  /// Fetches the latest statuses from Supabase and updates the local list.
+  Future<void> _fetchRiderStatuses() async {
+    try {
+      final List<String> riderIds = _riders.map((rider) => rider.id).toList();
+
+      final response = await supabase
+          .from('profiles')
+          .select('id, status, status_updated_at')
+          .in_('id', riderIds);
+
+      // Create a map for quick lookup
+      final Map<String, dynamic> statusMap = {};
+      List<String> ridersToRevert = [];
+
+      for (var row in response) {
+        statusMap[row['id']] = row;
+        final status = row['status'] as String? ?? 'available';
+        final lastUpdatedString = row['status_updated_at'] as String?;
+        final twentyMinutesAgo = DateTime.now().subtract(const Duration(minutes: 20));
+
+        if (status == 'booked' && lastUpdatedString != null) {
+          final lastUpdated = DateTime.parse(lastUpdatedString);
+          if (lastUpdated.isBefore(twentyMinutesAgo)) {
+            ridersToRevert.add(row['id'] as String);
+          }
+        }
+      }
+
+      // If there are riders to revert, perform the update in the database.
+      if (ridersToRevert.isNotEmpty) {
+        await supabase
+            .from('profiles')
+            .update({'status': 'available'})
+            .in_('id', ridersToRevert);
+      }
+
+      // Update the local list with the latest data from the map
+      setState(() {
+        _riders = _riders.map((rider) {
+          final riderData = statusMap[rider.id];
+          if (riderData != null) {
+            final newStatus = riderData['status'] as String? ?? 'available';
+            rider.isBooked = newStatus == 'booked';
+          }
+          return rider;
+        }).toList();
+      });
+
+    } catch (e) {
+      print('Error fetching rider statuses: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load status updates from server.')),
+      );
+    }
+  }
+
+  /// Toggles the rider's status in the database.
+  Future<void> _toggleBookedStatus(KekeRider rider) async {
+    final newStatus = rider.isBooked ? 'available' : 'booked';
+    try {
+      await supabase
+          .from('profiles')
+          .update({
+            'status': newStatus,
+            'status_updated_at': DateTime.now().toIso8601String()
+          })
+          .eq('id', rider.id);
+
+      // Update the local state immediately for a smooth UI
+      setState(() {
+        rider.isBooked = !rider.isBooked;
+      });
+
+      // Show a snackbar to confirm the action
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${rider.name} is now ${newStatus.toUpperCase()}')),
+      );
+    } catch (e) {
+      print('Error updating status for ${rider.name}: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update status.')),
+      );
+    }
+  }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
     final Uri launchUri = Uri(
@@ -33,12 +148,6 @@ class _KekeContactsListScreenState extends State<KekeContactsListScreen> {
         const SnackBar(content: Text('Could not launch phone dialer.')),
       );
     }
-  }
-
-  void _toggleBookedStatus(int index) {
-    setState(() {
-      _riders[index].isBooked = !_riders[index].isBooked;
-    });
   }
 
   /// Displays a pop-up dialog with the rider's details.
@@ -142,10 +251,9 @@ class _KekeContactsListScreenState extends State<KekeContactsListScreen> {
               },
               child: Text(
                 'Close',
-                style: TextStyle(color: Colors.red,
+                style: TextStyle(color: Colors.red),
               ),
             ),
-           ),
           ],
         );
       },
@@ -213,9 +321,9 @@ class _KekeContactsListScreenState extends State<KekeContactsListScreen> {
                 ),
                 const SizedBox(width: 8.0),
                 ElevatedButton(
-                  onPressed: () => _toggleBookedStatus(index),
+                  onPressed: () => _toggleBookedStatus(rider),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: rider.isBooked ? Colors.grey[600] : Colors.green,
+                    backgroundColor: rider.isBooked ? Colors.red : Colors.green,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8.0),
@@ -238,12 +346,14 @@ class _KekeContactsListScreenState extends State<KekeContactsListScreen> {
 }
 
 class KekeRider {
+  final String id;
   final String name;
   final String contact;
   final String review;
   bool isBooked;
 
   KekeRider({
+    required this.id,
     required this.name,
     required this.contact,
     required this.review,

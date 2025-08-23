@@ -27,7 +27,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _fullName = 'Loading...';
   String _email = 'Loading...';
   String _phoneNumber = 'Loading...';
-  File? _image;
+  String? _imageUrl; // This will store the public URL of the image
+  File? _imageFile; // This will store the selected image file before upload
   bool _isLoading = true;
 
   @override
@@ -52,14 +53,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _email = user.email ?? 'Not available';
         _phoneNumber = user.phone ?? 'Not available';
 
-        // Fetch the full name from the 'profiles' table
+        // Fetch the full name AND avatar URL from the 'profiles' table
         final response = await supabase
             .from('profiles')
-            .select('full_name') // Select the full_name column
-            .eq('id', user.id) // Filter by the user's ID
-            .single(); // Expect a single result
+            .select('full_name, avatar_url') // Select both columns
+            .eq('id', user.id)
+            .single();
 
         _fullName = response['full_name'] ?? 'Name not set';
+        _imageUrl = response['avatar_url']; // Get the image URL from the database
       } else {
         // Handle the case where the user is not authenticated
         _fullName = 'No user logged in';
@@ -80,15 +82,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  /// Handles image selection from the phone's gallery.
+  /// Handles image selection and upload.
   Future<void> _pickImage() async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
+      final file = File(image.path);
       setState(() {
-        _image = File(image.path);
+        _imageFile = file; // Update the temporary file in the UI
       });
+
+      // Show a loading indicator while uploading
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Uploading image...')),
+      );
+
+      // Upload the image to Supabase Storage and get the URL
+      final imageUrl = await _uploadProfileImage(file);
+      
+      // Update the user's profile with the new image URL
+      if (imageUrl != null) {
+        await supabase
+            .from('profiles')
+            .update({'avatar_url': imageUrl})
+            .eq('id', supabase.auth.currentUser!.id);
+
+        setState(() {
+          _imageUrl = imageUrl;
+          _imageFile = null; // Clear the temporary file reference
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image uploaded successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image upload failed.')),
+        );
+      }
+    }
+  }
+
+  /// Uploads the given file to Supabase Storage.
+  Future<String?> _uploadProfileImage(File file) async {
+    try {
+      final user = supabase.auth.currentUser;
+      if (user == null) {
+        throw Exception('User is not authenticated.');
+      }
+      
+      // The path where the image will be stored in the 'avatars' bucket
+      final filePath = '${user.id}/${DateTime.now().toIso8601String()}.png';
+
+      // Upload the file to the 'avatars' bucket
+      await supabase.storage.from('avatars').upload(
+        filePath,
+        file,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+      );
+
+      // Get the public URL of the uploaded image
+      final publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+      return publicUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
     }
   }
 
@@ -114,8 +173,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         CircleAvatar(
                           radius: 60,
                           backgroundColor: Theme.of(context).primaryColor,
-                          backgroundImage: _image != null ? FileImage(_image!) : null,
-                          child: _image == null
+                          // Use NetworkImage to display the URL from Supabase
+                          backgroundImage: _imageUrl != null
+                              ? NetworkImage(_imageUrl!)
+                              : _imageFile != null
+                                  ? FileImage(_imageFile!)
+                                  : null,
+                          child: _imageUrl == null && _imageFile == null
                               ? Icon(
                                   Icons.person,
                                   size: 70,

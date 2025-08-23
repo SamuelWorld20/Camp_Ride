@@ -55,5 +55,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+    <dict>
+    <key>CFBundleTypeRole</key>
+    <array>
+    <string>futaride</string>
+    </array>
+    </dict>
+    </array>
 </dict>
 </plist>
