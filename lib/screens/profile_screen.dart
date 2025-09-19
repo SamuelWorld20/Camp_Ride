@@ -3,15 +3,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:futaride/theme_provider.dart';
 import 'dart:io';
+import 'dart:typed_data'; // We need this for the new upload method
 
 // Import the Supabase package and hide the Provider class to avoid conflicts
 import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 
-// Define your Supabase constants here for use in this file.
-// IMPORTANT: These are for reference only. Supabase is initialized in main.dart.
-const supabaseUrl = 'https://yhmprtprcjoeimpaieeq.supabase.co';
+const  supabaseUrl = 'https://yhmprtprcjoeimpaieeq.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlobXBydHByY2pvZWltcGFpZWVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU3MDE1MDUsImV4cCI6MjA3MTI3NzUwNX0.vqlLE218TSLFKZVKkpKmyxt9Xc9ECJ06gGVzARM_2gE';
-
 // Get the already initialized Supabase client instance.
 final supabase = Supabase.instance.client;
 
@@ -28,7 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String _email = 'Loading...';
   String _phoneNumber = 'Loading...';
   String? _imageUrl; // This will store the public URL of the image
-  File? _imageFile; // This will store the selected image file before upload
+  Uint8List? _imageBytes; // This will store the selected image bytes before upload
   bool _isLoading = true;
 
   @override
@@ -88,9 +86,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
     if (image != null) {
-      final file = File(image.path);
+      final fileBytes = await image.readAsBytes();
       setState(() {
-        _imageFile = file; // Update the temporary file in the UI
+        _imageBytes = fileBytes; // Store the temporary file bytes for UI preview
       });
 
       // Show a loading indicator while uploading
@@ -99,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       // Upload the image to Supabase Storage and get the URL
-      final imageUrl = await _uploadProfileImage(file);
+      final imageUrl = await _uploadProfileImage(fileBytes, image.path);
       
       // Update the user's profile with the new image URL
       if (imageUrl != null) {
@@ -110,7 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         setState(() {
           _imageUrl = imageUrl;
-          _imageFile = null; // Clear the temporary file reference
+          _imageBytes = null; // Clear the temporary bytes reference
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -125,7 +123,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   /// Uploads the given file to Supabase Storage.
-  Future<String?> _uploadProfileImage(File file) async {
+  // FIX: This function now accepts Uint8List to avoid the 'File' type mismatch error.
+  Future<String?> _uploadProfileImage(Uint8List fileBytes, String filePath) async {
     try {
       final user = supabase.auth.currentUser;
       if (user == null) {
@@ -133,17 +132,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
       
       // The path where the image will be stored in the 'avatars' bucket
-      final filePath = '${user.id}/${DateTime.now().toIso8601String()}.png';
+      // We use the user ID and a timestamp to make the filename unique.
+      final fileName = '${user.id}/${DateTime.now().toIso8601String()}.png';
 
-      // Upload the file to the 'avatars' bucket
-      await supabase.storage.from('avatars').upload(
-        filePath,
-        file,
+      // FIX: Use uploadBinary instead of upload to handle the Uint8List directly.
+      await supabase.storage.from('avatars').uploadBinary(
+        fileName,
+        fileBytes,
         fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
       );
 
       // Get the public URL of the uploaded image
-      final publicUrl = supabase.storage.from('avatars').getPublicUrl(filePath);
+      final publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
       return publicUrl;
     } catch (e) {
       print('Error uploading image: $e');
@@ -173,19 +173,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         CircleAvatar(
                           radius: 60,
                           backgroundColor: Theme.of(context).primaryColor,
-                          // Use NetworkImage to display the URL from Supabase
-                          backgroundImage: _imageUrl != null
-                              ? NetworkImage(_imageUrl!)
-                              : _imageFile != null
-                                  ? FileImage(_imageFile!)
-                                  : null,
-                          child: _imageUrl == null && _imageFile == null
-                              ? Icon(
-                                  Icons.person,
-                                  size: 70,
-                                  color: Theme.of(context).colorScheme.onPrimary,
+                          // FIX: Use different widgets based on the state to avoid the type errors.
+                          // If there are temporary bytes, show that. If there's a URL, show that.
+                          // Otherwise, show the default icon.
+                          child: _imageBytes != null
+                              ? ClipOval(
+                                  child: Image.memory(
+                                    _imageBytes!,
+                                    fit: BoxFit.cover,
+                                    width: 120, // Match CircleAvatar radius * 2
+                                    height: 120,
+                                  ),
                                 )
-                              : null,
+                              : _imageUrl != null
+                                  ? ClipOval(
+                                      child: Image.network(
+                                        _imageUrl!,
+                                        fit: BoxFit.cover,
+                                        width: 120, // Match CircleAvatar radius * 2
+                                        height: 120,
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            Icon(Icons.person, size: 70, color: Theme.of(context).colorScheme.onPrimary),
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.person,
+                                      size: 70,
+                                      color: Theme.of(context).colorScheme.onPrimary,
+                                    ),
                         ),
                         Positioned(
                           bottom: 0,
