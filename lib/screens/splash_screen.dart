@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   void initState() {
     super.initState();
 
-    // Initialize the animation controller with a duration of 2 seconds
+    // Initialize the animation controller with a duration of 5 seconds
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 5000),
@@ -35,7 +35,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       end: const Offset(0.0, 0.0),   // End at its final position
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.5, 0.5, curve: Curves.easeInOut), // Start halfway through the animation
+      // The text now slides up in the last 30% of the animation, so it's
+      // on screen at the bottom for the first 70% of the animation.
+      curve: const Interval(0.7, 1.0, curve: Curves.easeInOut),
     ));
 
     // Create a fade animation for the icon, fading from full opacity to zero
@@ -44,7 +46,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       end: 0.0,   // Fully transparent
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: const Interval(0.0, 3.0, curve: Curves.easeInOut), // Fade out in the first half
+      // The icon is fully visible for the first 70% of the animation
+      // before it starts to fade out.
+      curve: const Interval(0.7, 1.0, curve: Curves.easeInOut),
     ));
 
     // Start the animation when the widget is first loaded
@@ -86,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black, // Use a clean, white background
+      backgroundColor: Colors.black, // Use a clean, black background
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -97,7 +101,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               child: Icon(
                 Icons.electric_rickshaw,
                 size: 80,
-                color: Colors.yellow, // Use a black color for the icon
+                color: Colors.yellow,
               ),
             ),
             SizedBox(height: 16),
@@ -109,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white, // Use a black color for the text
+                  color: Colors.white,
                 ),
               ),
             ),
